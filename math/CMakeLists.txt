@@ -28,6 +28,4 @@ endif()
 if(fftw3)
   add_subdirectory(fftw)
 endif()
-
-
-
+add_subdirectory(lvmini)
