@@ -2194,15 +2194,28 @@ Double_t TF1::GradientPar(Int_t ipar, const Double_t *x, Double_t eps)
    // if the errors have not been computed, step=eps is used
    // default value of eps = 0.01
    // Method is the same as in Derivative() function
+   // If an analytic function has been set with the SetGradientFunction() function,
+   // the eps parameter is ignored.
    //
    // If a paramter is fixed, the gradient on this parameter = 0
 
    if (fNpar == 0) return 0;
 
+   // Analytic
+   if(!fGradFunctor.Empty()) {
+      Double_t* grad = new Double_t[fNpar];
+      fGradFunctor((Double_t*)x, fParams, grad);
+      Double_t res = grad[ipar];
+      delete[] grad;
+      return res;
+   }
+
+   // Numeric
    if(eps< 1e-10 || eps > 1) {
       Warning("Derivative","parameter esp=%g out of allowed range[1e-10,1], reset to 0.01",eps);
       eps = 0.01;
    }
+
    Double_t h;
    TF1 *func = (TF1*)this;
    //save original parameters
@@ -2258,16 +2271,22 @@ void TF1::GradientPar(const Double_t *x, Double_t *grad, Double_t eps)
    // if the errors have not been computed, step=eps is used
    // default value of eps = 0.01
    // Method is the same as in Derivative() function
+   // If an analytic function has been set with the SetGradientFunction() function,
+   // the eps parameter is ignored.
    //
    // If a paramter is fixed, the gradient on this parameter = 0
 
-   if(eps< 1e-10 || eps > 1) {
-      Warning("Derivative","parameter esp=%g out of allowed range[1e-10,1], reset to 0.01",eps);
-      eps = 0.01;
-   }
+   if(!fGradFunctor.Empty()) {
+      fGradFunctor((Double_t*)x, fParams, grad);
+   } else {
+      if(eps< 1e-10 || eps > 1) {
+         Warning("Derivative","parameter esp=%g out of allowed range[1e-10,1], reset to 0.01",eps);
+         eps = 0.01;
+      }
 
-   for (Int_t ipar=0; ipar<fNpar; ipar++){
-      grad[ipar] = GradientPar(ipar,x,eps);
+      for (Int_t ipar=0; ipar<fNpar; ipar++){
+         grad[ipar] = GradientPar(ipar,x,eps);
+      }
    }
 }
 

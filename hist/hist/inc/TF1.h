@@ -42,6 +42,10 @@
 #include "Math/ParamFunctor.h"
 #endif
 
+#ifndef ROOT_Math_ParamGradFunctor
+#include "Math/ParamGradFunctor.h"
+#endif
+
 class TF1;
 class TH1;
 class TAxis;
@@ -59,7 +63,7 @@ protected:
    Double_t    fXmin;        //Lower bounds for the range
    Double_t    fXmax;        //Upper bounds for the range
    Int_t       fNpx;         //Number of points used for the graphical representation
-   Int_t       fType;        //(=0 for standard functions, 1 if pointer to function)
+   Int_t       fType;        //(=0 for standard functions, 1 if pointer to function, 2 if pointer to gradient function)
    Int_t       fNpfits;      //Number of points used in the fit
    Int_t       fNDF;         //Number of degrees of freedom in the fit
    Int_t       fNsave;       //Number of points used to fill array fSave
@@ -78,6 +82,7 @@ protected:
    Double_t     fMinimum;    //Minimum value for plotting
    TMethodCall *fMethodCall; //!Pointer to MethodCall in case of interpreted function
    ROOT::Math::ParamFunctor fFunctor;   //! Functor object to wrap any C++ callable object
+   ROOT::Math::ParamGradFunctor fGradFunctor; //! Functor object to wrap any C++ callable object for gradient calculation
 
    static Bool_t fgAbsValue;  //use absolute value of function when computing integral
    static Bool_t fgRejectPoint;  //True if point must be rejected in a fit
@@ -265,6 +270,10 @@ public:
    void SetFunction( PtrObj& p, MemFn memFn );
    template <typename Func> 
    void SetFunction( Func f );
+   template <class PtrObj, typename MemFn> 
+   void SetGradientFunction( PtrObj& p, MemFn memFn ); // For analytic calculation of gradient with respect to parameters, useful when fitting with the "G" option
+   template <typename Func> 
+   void SetGradientFunction( Func f ); // For analytic calculation of gradient with respect to parameters, useful when fitting with the "G" option
    virtual void     SetMaximum(Double_t maximum=-1111); // *MENU*
    virtual void     SetMinimum(Double_t minimum=-1111); // *MENU*
    virtual void     SetNDF(Int_t ndf);
@@ -326,6 +335,17 @@ void TF1::SetFunction( PtrObj& p, MemFn memFn )   {
    // set from a pointer to a member function
    fType = 1; 
    fFunctor = ROOT::Math::ParamFunctor(p,memFn); 
+} 
+
+template <typename Func> 
+void TF1::SetGradientFunction( Func f )    {
+   // set function from a generic C++ callable object 
+   fGradFunctor = ROOT::Math::ParamGradFunctor(f); 
+} 
+template <class PtrObj, typename MemFn> 
+void TF1::SetGradientFunction( PtrObj& p, MemFn memFn )   { 
+   // set from a pointer to a member function
+   fGradFunctor = ROOT::Math::ParamGradFunctor(p,memFn); 
 } 
 
 #endif
