@@ -36,7 +36,7 @@ public:
    /** 
       Default constructor
    */ 
-   LVMiniMinimizer ();
+   LVMiniMinimizer (float eps = 1e-4, float wlf1 = 1e-4, float wlf2 = 0.9);
 
    /** 
       Constructor with a char (used by PM) 
@@ -63,6 +63,7 @@ private:
 
 public: 
    /* Implementation of the ROOT::Math::Minimizer interface */
+   virtual void Clear();
    virtual void SetFunction(const ROOT::Math::IMultiGenFunction& func);
    virtual void SetFunction(const ROOT::Math::IMultiGradFunction& func);
    virtual bool SetVariable(unsigned int var, const std::string& varname, double start, double step);
@@ -77,6 +78,10 @@ public:
    virtual bool ProvidesError() const;
    virtual const double* Errors() const;
    virtual double CovMatrix(unsigned int i, unsigned int j) const;
+   virtual bool GetCovMatrix(double * cov) const;
+   virtual int CovMatrixStatus() const;
+   virtual double GlobalCC(unsigned int i) const;
+   virtual void PrintResults();
 protected: 
    
 private: 
@@ -92,6 +97,7 @@ private:
    // Filled after minimization
    double* fAux;
    double fMin;
+   mutable std::vector<double> fMinGradient;
    unsigned int fIterations;
 }; 
 
