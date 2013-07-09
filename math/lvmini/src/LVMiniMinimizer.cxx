@@ -22,32 +22,22 @@ extern "C" {
    extern void lvmini_(int* npar, int* mvec, int* nfcn, double* aux);
    extern void lvmfun_(double* x, double* f, int* iret, double* aux);
    extern int lvmind_(int* iarg);
+   extern void lvmprt_(int* lup, double* aux, int* iarg);
 }
 
 namespace ROOT { 
 
 namespace LVMini {
 
-LVMiniMinimizer::LVMiniMinimizer():
+LVMiniMinimizer::LVMiniMinimizer(float eps, float wlf1, float wlf2):
    fCalcErrors(true), fFunc(NULL), fAux(NULL), fMin(0.), fIterations(0)
 {
-   common_init();
+   lvmeps_(&eps, &wlf1, &wlf2);
 }
 
 LVMiniMinimizer::LVMiniMinimizer(const char* type):
    fCalcErrors(true), fFunc(NULL), fAux(NULL), fMin(0.), fIterations(0)
 {
-   common_init();
-}
-
-void LVMiniMinimizer::common_init()
-{
-   // Default parameters:
-   // TODO: Make these configurable
-   float eps = 1e-4;
-   float wlf1 = 1e-4;
-   float wlf2 = 0.9;
-   lvmeps_(&eps, &wlf1, &wlf2);
 }
 
 LVMiniMinimizer::~LVMiniMinimizer()
@@ -55,10 +45,19 @@ LVMiniMinimizer::~LVMiniMinimizer()
    delete[] fAux;
 }
 
+void LVMiniMinimizer::Clear()
+{
+   fVariables.clear();
+   fVariableNames.clear();
+
+   delete[] fAux;
+   fAux = 0;
+}
+
 void LVMiniMinimizer::SetFunction(const ROOT::Math::IMultiGenFunction& func)
 {
    std::cerr << "LVMiniMinimizer::SetFunction: LVMini needs gradient, use LVMiniMinimizer::SetFunction(const IMultiGradFunction&) instead!" << std::endl;
-   std::cerr << "If you are using TH1::Fit, use the fitting option \"G\", and, ideally, provide an analytic gradient calculation" << std::endl;
+   std::cerr << "If you are using TH1::Fit, use the fitting option \"G\", and, ideally, provide an analytic gradient calculation with TF1::SetGradientFunction" << std::endl;
 }
 
 void LVMiniMinimizer::SetFunction(const ROOT::Math::IMultiGradFunction& func)
@@ -75,6 +74,7 @@ bool LVMiniMinimizer::SetVariable(unsigned int var, const std::string& varname, 
    }
    else
    {
+      // we can safely ignore step because the algorithm uses the analytical gradient
       fVariables.push_back(start);
       fVariableNames.push_back(varname);
       return true;
@@ -158,7 +158,12 @@ double LVMiniMinimizer::MinValue() const
 
 double LVMiniMinimizer::Edm() const
 {
-   return 0.0; // Can we obtain it? Maybe remember the difference between the last two evalutions?
+   // Return magnitude of gradient vector at minimum
+   const double* grad = MinGradient();
+   double gradSqr = 0.;
+   for(unsigned int i = 0; i < fVariables.size(); ++i)
+      gradSqr += grad[i]*grad[i];
+   return sqrt(gradSqr);
 }
 
 const double* LVMiniMinimizer::X() const
@@ -170,8 +175,9 @@ const double* LVMiniMinimizer::X() const
 
 const double* LVMiniMinimizer::MinGradient() const
 {
-   // TODO: Evaluate the gradient function at the minimum, and store the results somewhere...
-   return NULL;
+   fMinGradient.resize(fVariables.size());
+   fFunc->Gradient(X(), &fMinGradient[0]);
+   return &fMinGradient[0];
 }
 
 unsigned int LVMiniMinimizer::NCalls() const
@@ -217,6 +223,49 @@ double LVMiniMinimizer::CovMatrix(unsigned int i, unsigned int j) const
 
    const unsigned int ijInd = ind - 1 + (j + 1) + ((i + 1) * (i + 1) - (i + 1)) / 2;
    return fAux[ijInd];
+}
+
+bool LVMiniMinimizer::GetCovMatrix(double* cov) const
+{
+   // TODO: Could be optimized, by only obtaining the index once
+   // and then iterating.
+   const unsigned int ndim = fVariables.size();
+   for(unsigned int i = 0; i < ndim; ++i)
+   {
+      for(unsigned int j = 0; j < i; ++j)
+      {
+         cov[i * ndim + j] = CovMatrix(i, j);
+         cov[j * ndim + i] = cov[i * ndim + j];
+      }
+
+      cov[i * ndim + i] = CovMatrix(i, i);
+   }
+
+   return true;
+}
+
+int LVMiniMinimizer::CovMatrixStatus() const
+{
+   int iarg = 5;
+   int ind = lvmind_(&iarg);
+   if(ind == 0) return -1;
+   return 3;
+}
+
+double LVMiniMinimizer::GlobalCC(unsigned int i) const
+{
+   int iarg = 4;
+   int ind = lvmind_(&iarg);
+   if(ind == 0) return -1.;
+
+   return fAux[ind + i];
+}
+
+void LVMiniMinimizer::PrintResults()
+{
+   int lup = 0;
+   int iarg = 6;
+   lvmprt_(&lup, fAux, &iarg);
 }
 
 } // end namespace LVMini
