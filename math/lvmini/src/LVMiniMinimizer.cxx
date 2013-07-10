@@ -144,6 +144,23 @@ bool LVMiniMinimizer::Minimize()
       if(fCalcErrors)
          fValidError = true;
 
+      // Adjust errors by fUp. We don't do this for the covariance matrix, because for the
+      // covariance matrix we do it in CovMatrix(). However, for Errors(), we
+      // return a pointer directly into the fAux array.
+      // In principle a cleaner solution would be to scale the function and gradient value
+      // by fUp, but this would mean doing it in every iteration, while this way we have
+      // to do it only once after the minimization. The result is the same.
+      int iarg = 2;
+      int ind = lvmind_(&iarg);
+      iarg = 3;
+      int ind2 = lvmind_(&iarg);
+
+      for(unsigned int i = 0; i < fVariables.size(); ++i)
+      {
+        fAux[ind + i] *= sqrt(2.0 * fUp);
+        fAux[ind2 + i] *= sqrt(2.0 * fUp);
+      }
+
       // Minimization complete
       return true;
    }
@@ -162,7 +179,7 @@ double LVMiniMinimizer::Edm() const
    const double* grad = MinGradient();
    double gradSqr = 0.;
    for(unsigned int i = 0; i < fVariables.size(); ++i)
-      gradSqr += grad[i]*grad[i];
+      gradSqr += grad[i]*grad[i]; // TODO: *2.0*fUp?
    return sqrt(gradSqr);
 }
 
@@ -222,7 +239,7 @@ double LVMiniMinimizer::CovMatrix(unsigned int i, unsigned int j) const
    if(j > i) std::swap(i, j);
 
    const unsigned int ijInd = ind - 1 + (j + 1) + ((i + 1) * (i + 1) - (i + 1)) / 2;
-   return fAux[ijInd];
+   return 2. * fUp * fAux[ijInd];
 }
 
 bool LVMiniMinimizer::GetCovMatrix(double* cov) const
