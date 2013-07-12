@@ -104,6 +104,9 @@ public:
    /// evaluate the derivative of the function with respect to the parameters
    void  ParameterGradient(double x, const double * par, double * grad ) const;
 
+   /// calculate function and derivative at same time (required by IParamGradFunction interface)
+   double EvalAndParameterGradient(double x, const double * par, double * grad) const;
+
    /// calculate function and derivative at same time (required by IGradient interface)
    void FdF(double x, double & f, double & deriv) const { 
       f = DoEval(x); 

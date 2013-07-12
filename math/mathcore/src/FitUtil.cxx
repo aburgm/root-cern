@@ -756,9 +756,9 @@ double FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & d
       const double * x = (useBinVolume) ? &xc.front() : x1;
 
       if (!useBinIntegral ) {
-         // AB: TODO: Use a kind of FdF here.
-         fval = func ( x, p ); 
-         func.ParameterGradient(  x , p, &gradFunc[0] ); 
+/*         fval = func ( x, p ); 
+         func.ParameterGradient(  x , p, &gradFunc[0] );*/
+         fval = func.EvalAndParameterGradient(x, p,  &gradFunc[0]);
       }
       else { 
          x2 = data.BinUpEdge(i); 

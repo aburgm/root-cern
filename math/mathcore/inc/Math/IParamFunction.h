@@ -248,7 +248,16 @@ public:
       unsigned int npar = NPar(); 
       for (unsigned int ipar  = 0; ipar < npar; ++ipar) 
          grad[ipar] = DoParameterDerivative(x,p,ipar); 
-   } 
+   }
+
+   /**
+      Evaluate both the function value and its derivatives (gradient vector) with respect to the parameters at a point x.
+      It is optional to be implemented by the derived classes for better efficiency
+   */
+   virtual double EvalAndParameterGradient(const double * x, const double * p, double * grad) const {
+       ParameterGradient(x, p, grad);
+       return operator()(x, p);
+   }
 
    /**
       Evaluate the partial derivative w.r.t a parameter ipar from values and parameters
@@ -325,6 +334,15 @@ public:
       for (unsigned int ipar  = 0; ipar < npar; ++ipar) 
          grad[ipar] = DoParameterDerivative(x, p, ipar); 
    } 
+
+   /**
+      Evaluate both the function value and its derivatives (gradient vector) with respect to the parameters at a point x.
+      It is optional to be implemented by the derived classes for better efficiency
+   */
+   virtual double EvalAndParameterGradient(double x, const double * p, double * grad) const {
+       ParameterGradient(x, p, grad);
+       return operator()(x, p);
+   }
 
    /**
       Evaluate all derivatives using cached parameter values

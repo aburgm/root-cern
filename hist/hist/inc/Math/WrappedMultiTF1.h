@@ -108,6 +108,9 @@ public:
    /// evaluate the derivative of the function with respect to the parameters
    void  ParameterGradient(const double * x, const double * par, double * grad ) const;
 
+   /// calculate function and derivative at same time (required by IParamGradFunction interface)
+   double EvalAndParameterGradient(const double * x, const double * par, double * grad) const;
+
    /// precision value used for calculating the derivative step-size 
    /// h = eps * |x|. The default is 0.001, give a smaller in case function changes rapidly
    static void SetDerivPrecision(double eps); 
