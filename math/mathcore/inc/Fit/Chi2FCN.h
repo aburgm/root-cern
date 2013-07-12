@@ -135,6 +135,12 @@ public:
       FitUtil::EvaluateChi2Gradient(fFunc, fData, x, g, fNEffPoints);
    }
 
+   // compute function value and gradient at the same time
+   virtual void FdF (const double * x, double & f, double * df) const {
+      this->UpdateNCalls();
+      f = FitUtil::EvaluateChi2Gradient(fFunc, fData, x, df, fNEffPoints);
+   }
+
    /// get type of fit method function
    virtual  typename BaseObjFunction::Type_t Type() const { return BaseObjFunction::kLeastSquare; }
 

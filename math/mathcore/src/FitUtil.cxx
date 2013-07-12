@@ -683,7 +683,7 @@ double FitUtil::EvaluateChi2Residual(const IModelFunction & func, const BinData 
 
 }
 
-void FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & data, const double * p, double * grad, unsigned int & nPoints) { 
+double FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & data, const double * p, double * grad, unsigned int & nPoints) { 
    // evaluate the gradient of the chi2 function
    // this function is used when the model function knows how to calculate the derivative and we can  
    // avoid that the minimizer re-computes them 
@@ -691,7 +691,7 @@ void FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & dat
    // case of chi2 effective (errors on coordinate) is not supported
 
    if ( data.HaveCoordErrors() ) {
-      MATH_ERROR_MSG("FitUtil::EvaluateChi2Residual","Error on the coordinates are not used in calculating Chi2 gradient");            return; // it will assert otherwise later in GetPoint
+      MATH_ERROR_MSG("FitUtil::EvaluateChi2Gradient","Error on the coordinates are not used in calculating Chi2 gradient");            return 0; // it will assert otherwise later in GetPoint
    }
 
    unsigned int nRejected = 0; 
@@ -729,6 +729,8 @@ void FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & dat
    std::vector<double> gradFunc( npar ); 
    // set all vector values to zero
    std::vector<double> g( npar); 
+   // The chi2 function value itself
+   double chi2 = 0.;
 
    for (unsigned int i = 0; i < n; ++ i) { 
 
@@ -754,6 +756,7 @@ void FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & dat
       const double * x = (useBinVolume) ? &xc.front() : x1;
 
       if (!useBinIntegral ) {
+         // AB: TODO: Use a kind of FdF here.
          fval = func ( x, p ); 
          func.ParameterGradient(  x , p, &gradFunc[0] ); 
       }
@@ -776,6 +779,9 @@ void FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & dat
          nRejected++; 
          continue;
       } 
+
+      double tmp = ( y -fval )* invError;
+      chi2 += tmp*tmp;
 
       // loop on the parameters
       unsigned int ipar = 0; 
@@ -816,7 +822,7 @@ void FitUtil::EvaluateChi2Gradient(const IModelFunction & f, const BinData & dat
 
    // copy result 
    std::copy(g.begin(), g.end(), grad);
-
+   return chi2;
 }
 
 //______________________________________________________________________________________________________
