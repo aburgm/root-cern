@@ -2407,6 +2407,42 @@ void TF1::GradientPar(const Double_t *x, Double_t *grad, Double_t eps)
 }
 
 //______________________________________________________________________________
+Double_t TF1::EvalAndGradientPar(const Double_t *x, Double_t *grad, Double_t eps)
+{
+   // Compute the gradient wrt parameters
+   // Parameters:
+   // x - point, were the gradient is computed
+   // grad - used to return the computed gradient, assumed to be of at least fNpar size
+   // eps - if the errors of parameters have been computed, the step used in
+   // numerical differentiation is eps*parameter_error.
+   // if the errors have not been computed, step=eps is used
+   // default value of eps = 0.01
+   // Method is the same as in Derivative() function
+   // If an analytic function has been set with the SetGradientFunction() function,
+   // the eps parameter is ignored.
+   //
+   // If a paramter is fixed, the gradient on this parameter = 0
+
+   if(!fGradFunctor.Empty()) {
+      return fGradFunctor((Double_t*)x, fParams, grad);
+   } else {
+      if(eps< 1e-10 || eps > 1) {
+         Warning("Derivative","parameter esp=%g out of allowed range[1e-10,1], reset to 0.01",eps);
+         eps = 0.01;
+      }
+
+      for (Int_t ipar=0; ipar<fNpar; ipar++){
+         grad[ipar] = GradientPar(ipar,x,eps);
+      }
+
+      // InitArgs has probably been called by GradientPar already:
+      if(fNpar == 0) this->InitArgs(x, fParams);
+      // Return the function value
+      return this->EvalPar(x, fParams);
+   }
+}
+
+//______________________________________________________________________________
 void TF1::InitArgs(const Double_t *x, const Double_t *params)
 {
    // Initialize parameters addresses.

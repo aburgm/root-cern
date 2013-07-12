@@ -249,6 +249,10 @@ public:
       fFunc->ParameterGradient(*x, p, grad); 
    } 
 
+   double EvalAndParameterGradient(const double *x, const double * p, double * grad) const {
+      return fFunc->EvalAndParameterGradient(*x, p, grad);
+   } 
+
    //  using IParamMultiGradFunction::BaseFunc::operator();
 
 private: 

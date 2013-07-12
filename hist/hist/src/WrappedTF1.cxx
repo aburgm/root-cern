@@ -92,6 +92,23 @@ void  WrappedTF1::ParameterGradient(double x, const double * par, double * grad 
    }
 }
 
+double WrappedTF1::EvalAndParameterGradient(double x, const double * par, double * grad ) const {
+   // see note above concerning the fixed parameters in linear functions
+   if(!fLinear) {
+      // need to set parameter values
+      fFunc->SetParameters( par );
+      // no need to call InitArgs (it is called in TF1::GradientPar)
+      return fFunc->EvalAndGradientPar(&x,grad,fgEps);
+   }
+   else {
+      unsigned int np = NPar();
+      for (unsigned int i = 0; i < np; ++i) 
+         grad[i] = DoParameterDerivative(x, par, i);
+      if (fFunc->GetMethodCall() ) fFunc->InitArgs(&x,par);  // needed for interpreted functions 
+      return fFunc->EvalPar(&x, par);
+   }
+}
+
 double WrappedTF1::DoDerivative( double  x  ) const { 
    // return the function derivatives w.r.t. x 
 
@@ -205,6 +222,23 @@ void  WrappedMultiTF1::ParameterGradient(const double * x, const double * par, d
       unsigned int np = NPar();
       for (unsigned int i = 0; i < np; ++i) 
          grad[i] = DoParameterDerivative(x, par, i);
+   }
+}
+
+double WrappedMultiTF1::EvalAndParameterGradient(const double * x, const double * par, double * grad ) const {
+   // see note above concerning the fixed parameters in linear functions
+   if(!fLinear) {
+      // need to set parameter values
+      fFunc->SetParameters( par );
+      // no need to call InitArgs (it is called in TF1::GradientPar)
+      return fFunc->EvalAndGradientPar(x,grad,fgEps);
+   }
+   else {
+      unsigned int np = NPar();
+      for (unsigned int i = 0; i < np; ++i) 
+         grad[i] = DoParameterDerivative(x, par, i);
+      if (fFunc->GetMethodCall() ) fFunc->InitArgs(x,par);  // needed for interpreted functions 
+      return fFunc->EvalPar(x, par);
    }
 }
 
