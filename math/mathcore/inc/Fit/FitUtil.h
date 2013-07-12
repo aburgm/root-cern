@@ -58,8 +58,10 @@ namespace FitUtil {
    /** 
        evaluate the Chi2 gradient given a model function and the data at the point x. 
        return also nPoints as the effective number of used points in the Chi2 evaluation
+       Return the Chi2 itself, as EvaluateChi2 would. It comes basically for free,
+       and saves another potentially lengthy computation if both chi2 and dchi2/dx_i are needed
    */ 
-   void EvaluateChi2Gradient(const IModelFunction & func, const BinData & data, const double * x, double * grad, unsigned int & nPoints);  
+   double EvaluateChi2Gradient(const IModelFunction & func, const BinData & data, const double * x, double * grad, unsigned int & nPoints);  
 
    /** 
        evaluate the LogL given a model function and the data at the point x. 
