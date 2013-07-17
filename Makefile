@@ -224,6 +224,9 @@ endif
 ifeq ($(BUILDMINUIT2),yes)
 MODULES      += math/minuit2
 endif
+ifeq ($(BUILDLVMINI),yes)
+MODULES      += math/lvmini
+endif
 ifeq ($(BUILDUNURAN),yes)
 MODULES      += math/unuran
 endif
@@ -297,10 +300,10 @@ MODULES      += core/unix core/winnt graf2d/x11 graf2d/x11ttf \
                 sql/oracle io/xmlparser math/mathmore \
                 tmva math/genetic io/hdfs graf2d/fitsio roofit/roofitcore \
                 roofit/roofit roofit/roostats roofit/histfactory \
-                math/minuit2 net/monalisa math/fftw sql/odbc math/unuran \
-                geom/geocad geom/gdml graf3d/eve net/glite misc/memstat \
-                math/genvector net/bonjour graf3d/gviz3d graf2d/gviz \
-                proof/proofbench proof/afdsmgrd graf2d/ios \
+                math/minuit2 math/lvmini net/monalisa math/fftw sql/odbc \
+		math/unuran geom/geocad geom/gdml graf3d/eve net/glite \
+		misc/memstat math/genvector net/bonjour graf3d/gviz3d \
+		graf2d/gviz proof/proofbench proof/afdsmgrd graf2d/ios \
                 graf2d/quartz graf2d/cocoa core/macosx
 MODULES      := $(sort $(MODULES))   # removes duplicates
 endif
