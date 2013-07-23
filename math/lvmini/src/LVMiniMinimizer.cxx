@@ -29,14 +29,14 @@ namespace ROOT {
 
 namespace LVMini {
 
-LVMiniMinimizer::LVMiniMinimizer(float eps, float wlf1, float wlf2):
-   fCalcErrors(true), fFunc(NULL), fAux(NULL), fMin(0.), fIterations(0)
+LVMiniMinimizer::LVMiniMinimizer(bool calcerrors, float eps, float wlf1, float wlf2):
+   fCalcErrors(calcerrors), fFunc(NULL), fAux(NULL), fMin(0.), fIterations(0)
 {
    lvmeps_(&eps, &wlf1, &wlf2);
 }
 
 LVMiniMinimizer::LVMiniMinimizer(const char* type):
-   fCalcErrors(true), fFunc(NULL), fAux(NULL), fMin(0.), fIterations(0)
+   fCalcErrors(strcmp(type, "NoErrors") != 0), fFunc(NULL), fAux(NULL), fMin(0.), fIterations(0)
 {
 }
 
@@ -155,10 +155,11 @@ bool LVMiniMinimizer::Minimize()
       iarg = 3;
       int ind2 = lvmind_(&iarg);
 
+      const double sqrt2fUp = sqrt(2.0 * fUp);
       for(unsigned int i = 0; i < fVariables.size(); ++i)
       {
-        fAux[ind + i] *= sqrt(2.0 * fUp);
-        fAux[ind2 + i] *= sqrt(2.0 * fUp);
+        fAux[ind + i] *= sqrt2fUp;
+        fAux[ind2 + i] *= sqrt2fUp;
       }
 
       // Minimization complete

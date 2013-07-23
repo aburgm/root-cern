@@ -36,7 +36,7 @@ public:
    /** 
       Default constructor
    */ 
-   LVMiniMinimizer (float eps = 1e-4, float wlf1 = 1e-4, float wlf2 = 0.9);
+   LVMiniMinimizer (bool calcerrors = true, float eps = 1e-4, float wlf1 = 1e-4, float wlf2 = 0.9);
 
    /** 
       Constructor with a char (used by PM) 
