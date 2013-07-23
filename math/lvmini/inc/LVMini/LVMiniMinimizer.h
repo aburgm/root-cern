@@ -29,6 +29,12 @@ namespace ROOT {
 
    namespace LVMini { 
 
+//______________________________________________________________________________
+/** 
+   LVMiniMinimizer class implementing the ROOT::Math::Minimizer interface for
+   the LVMini algorithm.
+   In ROOT it can be instantiated using the plug-in manager (plug-in "LVMini")
+*/
 class LVMiniMinimizer : public ROOT::Math::Minimizer {
 
 public: 
