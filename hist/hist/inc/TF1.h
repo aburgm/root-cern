@@ -242,6 +242,7 @@ public:
    TAxis           *GetXaxis() const ;
    TAxis           *GetYaxis() const ;
    TAxis           *GetZaxis() const ;
+   virtual Double_t GradientParNumeric(Int_t ipar, const Double_t *x, Double_t eps=0.01);
    virtual Double_t GradientPar(Int_t ipar, const Double_t *x, Double_t eps=0.01);
    virtual void     GradientPar(const Double_t *x, Double_t *grad, Double_t eps=0.01);
    virtual Double_t EvalAndGradientPar(const Double_t *x, Double_t *grad, Double_t eps=0.01);
@@ -275,6 +276,7 @@ public:
    void SetGradientFunction( PtrObj& p, MemFn memFn ); // For analytic calculation of gradient with respect to parameters, useful when fitting with the "G" option
    template <typename Func> 
    void SetGradientFunction( Func f ); // For analytic calculation of gradient with respect to parameters, useful when fitting with the "G" option
+   bool CheckGradientFunction(Double_t epsilon = 0.01, Double_t thres = 0.001);
    virtual void     SetMaximum(Double_t maximum=-1111); // *MENU*
    virtual void     SetMinimum(Double_t minimum=-1111); // *MENU*
    virtual void     SetNDF(Int_t ndf);

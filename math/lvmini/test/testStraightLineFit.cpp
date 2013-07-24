@@ -8,7 +8,7 @@
 double gradient(double *x, double *p, double *u)
 {
 	u[0] = x[0];
-	u[1] = 1.;
+	u[1] = 1.0;
 	return p[0]*x[0] + p[1];
 }
 
@@ -40,6 +40,7 @@ int main()
 		f->SetGradientFunction(gradient);
 		f->SetParName(0, "slope"); f->SetParameter(0, 5.);
 		f->SetParName(1, "constant"); f->SetParameter(1, 5.);
+		f->CheckGradientFunction();
 		TFitResultPtr result = h->Fit(f, "SQG");
 
 		std::cout << minimizerDef[i].Name << " Straight line fit result: " << std::endl;

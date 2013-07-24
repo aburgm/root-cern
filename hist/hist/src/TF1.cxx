@@ -2180,10 +2180,8 @@ TAxis *TF1::GetZaxis() const
    return h->GetZaxis();
 }
 
-
-
 //______________________________________________________________________________
-Double_t TF1::GradientPar(Int_t ipar, const Double_t *x, Double_t eps)
+Double_t TF1::GradientParNumeric(Int_t ipar, const Double_t *x, Double_t eps)
 {
    // Compute the gradient (derivative) wrt a parameter ipar
    // Parameters:
@@ -2194,21 +2192,10 @@ Double_t TF1::GradientPar(Int_t ipar, const Double_t *x, Double_t eps)
    // if the errors have not been computed, step=eps is used
    // default value of eps = 0.01
    // Method is the same as in Derivative() function
-   // If an analytic function has been set with the SetGradientFunction() function,
-   // the eps parameter is ignored.
    //
    // If a paramter is fixed, the gradient on this parameter = 0
 
    if (fNpar == 0) return 0;
-
-   // Analytic
-   if(!fGradFunctor.Empty()) {
-      Double_t* grad = new Double_t[fNpar];
-      fGradFunctor((Double_t*)x, fParams, grad);
-      Double_t res = grad[ipar];
-      delete[] grad;
-      return res;
-   }
 
    // Numeric
    if(eps< 1e-10 || eps > 1) {
@@ -2257,6 +2244,43 @@ Double_t TF1::GradientPar(Int_t ipar, const Double_t *x, Double_t eps)
    fParams[ipar] = par0;
 
    return grad;
+
+}
+
+//______________________________________________________________________________
+Double_t TF1::GradientPar(Int_t ipar, const Double_t *x, Double_t eps)
+{
+   // Compute the gradient (derivative) wrt a parameter ipar
+   // Parameters:
+   // ipar - index of parameter for which the derivative is computed
+   // x - point, where the derivative is computed
+   // eps - if the errors of parameters have been computed, the step used in
+   // numerical differentiation is eps*parameter_error.
+   // if the errors have not been computed, step=eps is used
+   // default value of eps = 0.01
+   // If an analytic function has been set with the SetGradientFunction() function,
+   // the eps parameter is ignored and the derivative is computed using the
+   // gradient function. Otherwise the same numeric method is used as in
+   // the Derivative() function
+   //
+   // Use the GradientParNumeric() function to always compute the gradient
+   // numerically.
+   //
+   // If a paramter is fixed, the gradient on this parameter = 0
+
+   if (fNpar == 0) return 0; 
+
+   // Analytic
+   if(!fGradFunctor.Empty()) {
+      Double_t* grad = new Double_t[fNpar];
+      fGradFunctor((Double_t*)x, fParams, grad);
+      Double_t res = grad[ipar];
+      delete[] grad;
+      return res;
+   }
+
+   // Numeric
+   return GradientParNumeric(ipar,x,eps);
 }
 
 //______________________________________________________________________________
@@ -2270,9 +2294,13 @@ void TF1::GradientPar(const Double_t *x, Double_t *grad, Double_t eps)
    // numerical differentiation is eps*parameter_error.
    // if the errors have not been computed, step=eps is used
    // default value of eps = 0.01
-   // Method is the same as in Derivative() function
    // If an analytic function has been set with the SetGradientFunction() function,
-   // the eps parameter is ignored.
+   // the eps parameter is ignored and the derivative is computed using the
+   // gradient function. Otherwise the same numeric method is used as in
+   // the Derivative() function
+   //
+   // Use the GradientParNumeric() function to always compute the gradient
+   // numerically.
    //
    // If a paramter is fixed, the gradient on this parameter = 0
 
@@ -2285,9 +2313,9 @@ void TF1::GradientPar(const Double_t *x, Double_t *grad, Double_t eps)
       }
 
       for (Int_t ipar=0; ipar<fNpar; ipar++){
-         grad[ipar] = GradientPar(ipar,x,eps);
+         grad[ipar] = GradientParNumeric(ipar,x,eps);
       }
-   }
+   }   
 }
 
 //______________________________________________________________________________
@@ -3086,6 +3114,57 @@ void TF1::SetFitResult(const ROOT::Fit::FitResult & result, const Int_t* indpar 
 
 }
 
+//______________________________________________________________________________
+bool TF1::CheckGradientFunction(Double_t eps, Double_t thres)
+{
+   // Check that the analytic gradient function set by SetGradientFunction()
+   // computes correct gradient values, by comparison to numeric differentation.
+   // 100 points along the X axis are checked with the current parameter values.
+   // If the test fails the function returns false, otherwise true.
+   //
+   // The parameter eps is used for the numerical derivative, see
+   // the GradientParNumeric() function
+   // The parameter thres is a threshold. When the function or gradient devitation
+   // exceeds the threshold a warning is printed.
+   if(fGradFunctor.Empty()) {
+      Warning("CheckGradientFunction","No gradient function set. Call SetGradientFunction() before this");
+      return false;
+   }
+
+   if(fNpar == 0) {
+      Warning("CheckGradientFunction","Function has no parameters");
+      return false;
+   }
+
+   Double_t* AnalyticGrad = new Double_t[fNpar];
+
+   bool result = true;
+   const Double_t xstep = (fXmax - fXmin) / 100.;
+   for(Double_t x = fXmin; x <= fXmax; x += xstep) {
+      const Double_t gradVal = EvalAndGradientPar(&x, AnalyticGrad);
+      const Double_t val = Eval(x);
+
+      if( fabs(val - gradVal) > thres)
+      {
+         Warning("CheckGradientFunction", "Gradient function return value does not match Eval return value at x=%g: eval=%g, gradientFunction=%g", x, val, gradVal);
+         result = false;
+         break;
+      }
+
+      for(Int_t i = 0; i < fNpar; ++i) {
+         const Double_t NumericGrad = GradientParNumeric(i, &x, eps);
+         if(fabs(NumericGrad - AnalyticGrad[i]) > thres) {
+            Warning("CheckGradientFunction", "Gradient for parameter %d (%s) does not match numeric estimation at x=%g: numeric=%g, analytic=%g", i, GetParName(i), x, NumericGrad, AnalyticGrad[i]);
+            result = false;
+            x = fXmax + 1.; // Break outer loop, too
+            break;
+         }
+      }
+   }
+
+   delete[] AnalyticGrad;
+   return result;
+}
 
 //______________________________________________________________________________
 void TF1::SetMaximum(Double_t maximum)
