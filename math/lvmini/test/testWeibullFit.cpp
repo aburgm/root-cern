@@ -127,6 +127,7 @@ int main()
         fWeib->SetParameter(3, -amax-22.);
         fWeib->SetParName(4, "offset");
         fWeib->SetParameter(4, amax);
+        fWeib->CheckGradientFunction(1e-5, 1e-3);
 
         // fit
         TFitResultPtr result = h->Fit(fWeib, "SQG");
