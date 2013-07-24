@@ -56,7 +56,6 @@ int main()
   }
 
   // Set minimizer:
-  // TODO: Minuit does not seem to successfully run the minimization at all. Found out why.
   ROOT::Fit::FitConfig::SetDefaultMinimizer("LVMini", "");
   const double err = sqrt(1.0/0.3);
 
@@ -127,7 +126,7 @@ int main()
         fWeib->SetParameter(3, -amax-22.);
         fWeib->SetParName(4, "offset");
         fWeib->SetParameter(4, amax);
-        fWeib->CheckGradientFunction(1e-5, 1e-3);
+        fWeib->CheckGradientFunction(1e-6); // decrease epsilon for better precision
 
         // fit
         TFitResultPtr result = h->Fit(fWeib, "SQG");
